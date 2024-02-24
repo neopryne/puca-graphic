@@ -1,38 +1,62 @@
 from PIL import Image
+from math import sqrt
+from math import ceil
 import zlib
 
 
 def bitstring_to_bytes(s):
     return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
 
+#Ok I either need terminators or length declarations.
+#For getting around compression, I'll need to be less granular.  Maybe rgb = on or off for each pixel, three bits.
 def encode(zip_file_path, image_path):
     # Read the zip file as binary data
     with open(zip_file_path, 'rb') as file:
         zip_data = file.read()
 
-    # Convert zip data to binary format
-    binary_data = ''.join(format(byte, '08b') for byte in zip_data)
+        # Convert zip data to binary format
+        binary_data = ''.join(format(byte, '08b') for byte in zip_data)
 
-    # Determine the size of the image needed to accommodate the binary data
-    width = 1
-    height = len(binary_data) #+ 2 // 3)) + 1  # 3 bytes per pixel  no idiot you only use one
-    print(height)
-    image_size = (width, height)
+        # Calculate the number of pixels needed
+        num_pixels = ceil(len(binary_data) / (3 * 8))  # 3 bytes per pixel
+        width = ceil(sqrt(num_pixels))  # Square root rounded up
+        height = ceil((num_pixels) / width)
+        image_size = (width, height)
 
-    # Create a new image with the determined size
-    encoded_image = Image.new('RGB', image_size)
+        print(num_pixels)
+        print(width)
+        print(height)
 
-    # Embed the binary data into the image
-    pixels = []
-    for i in range(len(binary_data)):
-        #this only chooses between 49 and 48. I could get way better results by using the entire red channel.
-        #print(ord(binary_data[i]))
-        pixels.append((ord(binary_data[i]), 0, 0))  # Only use the red channel to embed data
-        #print(i)
-    encoded_image.putdata(pixels)
+        # Create a new image with the determined size
+        encoded_image = Image.new('RGB', image_size)
 
-    # Save the encoded image
-    encoded_image.save(image_path, 'PNG')
+        # Embed the binary data into the image
+        pixels = []
+        index = 0
+        for i in range(width):
+            for j in range(height):
+                # Get the next 3 bits of binary data
+                if index < len(binary_data):
+                    r = int(binary_data[index:index + 8], 2)
+                    index += 8
+                else:
+                    r = 0  # Padding with zeros if binary data ends prematurely
+                if index < len(binary_data):
+                    g = int(binary_data[index:index + 8], 2)
+                    index += 8
+                else:
+                    g = 0
+                if index < len(binary_data):
+                    b = int(binary_data[index:index + 8], 2)
+                    index += 8
+                else:
+                    b = 0
+                pixels.append((r, g, b))
+
+        encoded_image.putdata(pixels)
+
+        # Save the encoded image
+        encoded_image.save(image_path, 'PNG')
 
 
 def decode(image_path, zip_file_path):
@@ -42,7 +66,17 @@ def decode(image_path, zip_file_path):
 
     # Extract data from the red channel of each pixel
     # wait why are we casting this to a char?  This should create bytes to start with.
-    binary_data = ''.join([chr(pixel[0]) for pixel in encoded_image.getdata()])
+    # Extract data from the image pixels
+    binary_data = ''
+    for pixel in encoded_image.getdata():
+        binary_data += format(pixel[0], '08b')  # Red channel
+        binary_data += format(pixel[1], '08b')  # Green channel
+        binary_data += format(pixel[2], '08b')  # Blue channel
+
+    # Convert binary data back to bytes
+    bytes_data = bytes(int(binary_data[i:i+8], 2) for i in range(0, len(binary_data), 8))
+
+    #binary_data = ''.join([chr(pixel[0]) for pixel in encoded_image.getdata()])
 
 
     # doesn't this need to convert the binary date to something else?  maybe encode does that..
@@ -52,8 +86,8 @@ def decode(image_path, zip_file_path):
 
     # Write the decompressed data to a zip file
     with open(zip_file_path, 'wb') as file:
-        file.write(bitstring_to_bytes(binary_data.encode()))
+        file.write(bytes_data)
 
 
-encode("test.txt", "test.png")
-decode("test.png", "results.txt")
+encode("Tom Knight and the Lisp Machine.txt", "test.png")
+decode("test.png", "output.txt")
