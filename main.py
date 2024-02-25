@@ -66,10 +66,6 @@ def decode(image_path, zip_file_path):
     # Load the encoded image
     encoded_image = Image.open(image_path)
 
-
-    # Extract data from the red channel of each pixel
-    # wait why are we casting this to a char?  This should create bytes to start with.
-    # Extract data from the image pixels
     binary_data = ''
     for pixel in encoded_image.getdata():
         binary_data += format(pixel[0], '08b')  # Red channel
@@ -78,14 +74,6 @@ def decode(image_path, zip_file_path):
 
     # Convert binary data back to bytes
     bytes_data = bytes(int(binary_data[i:i+8], 2) for i in range(0, len(binary_data), 8))
-
-    #binary_data = ''.join([chr(pixel[0]) for pixel in encoded_image.getdata()])
-
-
-    # doesn't this need to convert the binary date to something else?  maybe encode does that..
-
-    # Decompress the binary data
-    #decompressed_data = zlib.decompress(binary_data.encode())
 
     # Write the decompressed data to a zip file
     with open(zip_file_path, 'wb') as file:
@@ -118,14 +106,20 @@ end_embed_extension = ")"
 global_strings = {KEY_SOURCE_FILENAME: "", KEY_SOURCE_FOLDER: "", KEY_SOURCE_EXTENSION: "", KEY_SOURCE_FULL_PATH: "",
                   KEY_EMBEDDED_EXTENSION: ""}
 
+def embedded_extension():
+    stored = global_strings[KEY_EMBEDDED_EXTENSION]
+    if stored == "":
+        return "txt" #default to txt
+    return stored
+
 
 def encode_pressed():
     #for this to work, embedded extension must be non-null
     # Placeholder for encode button press action
     print("Encode button pressed " + global_strings[KEY_SOURCE_FILENAME])
     print("E " + global_strings[KEY_SOURCE_EXTENSION])
-    outfilepath = global_strings[KEY_SOURCE_FILENAME] + begin_embed_extension +\
-                  global_strings[KEY_SOURCE_EXTENSION] + end_embed_extension + ".png"
+    outfilepath = global_strings[KEY_SOURCE_FOLDER] + global_strings[KEY_SOURCE_FILENAME] + begin_embed_extension +\
+                  embedded_extension() + end_embed_extension + ".png"
     print(outfilepath)
     encode(global_strings[KEY_SOURCE_FULL_PATH], outfilepath)
 
@@ -148,7 +142,7 @@ def browse_file():
     last_rparen_index = file_path.rfind(end_embed_extension)
     if last_rparen_index == -1 or last_lparen_index == -1:
         global_strings[KEY_EMBEDDED_EXTENSION] = ""
-        global_strings[KEY_SOURCE_FILENAME] = file_path[last_slash_index + 1:last_dot_index]
+        global_strings[KEY_SOURCE_FILENAME] = file_path[last_slash_index:last_dot_index]
     else:
         global_strings[KEY_EMBEDDED_EXTENSION] = file_path[last_lparen_index + 1:last_rparen_index]
         global_strings[KEY_SOURCE_FILENAME] = file_path[last_slash_index:last_lparen_index]
