@@ -19,6 +19,7 @@ def encode(zip_file_path, image_path):
 
         # Convert zip data to binary format
         binary_data = ''.join(format(byte, '08b') for byte in zip_data)
+        #I should be doing both of these streamed.
 
         # Calculate the number of pixels needed
         num_pixels = ceil(len(binary_data) / (3 * 8))  # 3 bytes per pixel
@@ -65,9 +66,14 @@ def encode(zip_file_path, image_path):
 def decode(image_path, zip_file_path):
     # Load the encoded image
     encoded_image = Image.open(image_path)
+    i = 0
+    #todo add a pixel counter to the decode because it takes a long time for files over like a meg.
+    #todo also make this faster because wow.  It's going to take like an hour for a 12 meg file.
 
     binary_data = ''
     for pixel in encoded_image.getdata():
+        print(i)
+        i = i + 1
         binary_data += format(pixel[0], '08b')  # Red channel
         binary_data += format(pixel[1], '08b')  # Green channel
         binary_data += format(pixel[2], '08b')  # Blue channel
