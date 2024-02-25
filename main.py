@@ -1,8 +1,11 @@
 from PIL import Image
 from math import sqrt
 from math import ceil
+import tkinter as tk
+from tkinter import filedialog
 import zlib
 
+#the unlicense for now.
 
 def bitstring_to_bytes(s):
     return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
@@ -88,6 +91,98 @@ def decode(image_path, zip_file_path):
     with open(zip_file_path, 'wb') as file:
         file.write(bytes_data)
 
+#encoding original filename would be nice, required for public release.
 
-encode("Tom Knight and the Lisp Machine.txt", "test.png")
-decode("test.png", "output.txt")
+#encode("Jabberwocky.txt", "test.png")
+#decode("test.png", "output.txt")
+
+#togpt Image compression algorithms often remove subtle data from files.
+
+
+def get_text_after_last_dot(text):
+    last_slash_index = text.rfind('.')
+    # If no forward slash is found, return empty string
+    if last_slash_index == -1:
+        return ""
+    return text[last_slash_index + 1:]
+
+KEY_SOURCE_FULL_PATH = "source_full_path"
+KEY_SOURCE_FILENAME = "source_filename" #this includes the leading slash, so /filename.
+KEY_SOURCE_FOLDER = "source_folder"
+KEY_SOURCE_EXTENSION = "source_extension"
+KEY_EMBEDDED_EXTENSION = "embedded_extension"
+
+begin_embed_extension = "(."
+end_embed_extension = ")"
+
+global_strings = {KEY_SOURCE_FILENAME: "", KEY_SOURCE_FOLDER: "", KEY_SOURCE_EXTENSION: "", KEY_SOURCE_FULL_PATH: "",
+                  KEY_EMBEDDED_EXTENSION: ""}
+
+
+def encode_pressed():
+    #for this to work, embedded extension must be non-null
+    # Placeholder for encode button press action
+    print("Encode button pressed " + global_strings[KEY_SOURCE_FILENAME])
+    print("E " + global_strings[KEY_SOURCE_EXTENSION])
+    outfilepath = global_strings[KEY_SOURCE_FILENAME] + begin_embed_extension +\
+                  global_strings[KEY_SOURCE_EXTENSION] + end_embed_extension + ".png"
+    print(outfilepath)
+    encode(global_strings[KEY_SOURCE_FULL_PATH], outfilepath)
+
+
+def decode_pressed():
+    # Placeholder for decode button press action
+    decode_file_name = global_strings[KEY_SOURCE_FOLDER] + global_strings[KEY_SOURCE_FILENAME] +\
+                       global_strings[KEY_EMBEDDED_EXTENSION]
+    print("Decode button pressed " + decode_file_name)
+    decode(global_strings[KEY_SOURCE_FULL_PATH], decode_file_name)
+
+def browse_file():
+    # Open a file dialog to select a file
+    file_path = filedialog.askopenfilename()
+    entry.delete(0, tk.END)  # Clear the text box
+    entry.insert(tk.END, file_path)  # Insert the selected file path into the text box
+    last_slash_index = file_path.rfind('/')
+    last_dot_index = file_path.rfind('.')
+    last_lparen_index = file_path.rfind(begin_embed_extension)
+    last_rparen_index = file_path.rfind(end_embed_extension)
+    if last_rparen_index == -1 or last_lparen_index == -1:
+        global_strings[KEY_EMBEDDED_EXTENSION] = ""
+        global_strings[KEY_SOURCE_FILENAME] = file_path[last_slash_index + 1:last_dot_index]
+    else:
+        global_strings[KEY_EMBEDDED_EXTENSION] = file_path[last_lparen_index + 1:last_rparen_index]
+        global_strings[KEY_SOURCE_FILENAME] = file_path[last_slash_index:last_lparen_index]
+        print("EE: " + global_strings[KEY_EMBEDDED_EXTENSION])
+    last_dot_index = file_path.rfind('.')
+    if last_slash_index == -1 or last_dot_index == -1:
+        #error message
+        print("invalid path")
+        return
+    global_strings[KEY_SOURCE_FULL_PATH] = file_path
+    global_strings[KEY_SOURCE_FOLDER] = file_path[:last_slash_index]
+    global_strings[KEY_SOURCE_EXTENSION] = file_path[last_dot_index + 1:]
+    print("Source folder: " + global_strings[KEY_SOURCE_FOLDER])
+    print("Source filename: " + global_strings[KEY_SOURCE_FILENAME])
+
+
+# Create the main window
+root = tk.Tk()
+root.title("Changeling")
+
+# Create buttons
+encode_button = tk.Button(root, text="Encode", command=encode_pressed)
+decode_button = tk.Button(root, text="Decode", command=decode_pressed)
+browse_button = tk.Button(root, text="Browse", command=browse_file)
+
+# Create text box
+entry = tk.Entry(root, width=50)
+
+# Place buttons and text box in the window
+encode_button.grid(row=0, column=0, padx=5, pady=5)
+decode_button.grid(row=0, column=1, padx=5, pady=5)
+entry.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+browse_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+
+# Start the Tkinter event loop
+root.mainloop()
+
