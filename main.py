@@ -119,7 +119,7 @@ def encode_pressed():
     print("Encode button pressed " + global_strings[KEY_SOURCE_FILENAME])
     print("E " + global_strings[KEY_SOURCE_EXTENSION])
     outfilepath = global_strings[KEY_SOURCE_FOLDER] + global_strings[KEY_SOURCE_FILENAME] + begin_embed_extension +\
-                  embedded_extension() + end_embed_extension + ".png"
+                  global_strings[KEY_SOURCE_EXTENSION] + end_embed_extension + ".png"
     print(outfilepath)
     encode(global_strings[KEY_SOURCE_FULL_PATH], outfilepath)
 
@@ -127,7 +127,7 @@ def encode_pressed():
 def decode_pressed():
     # Placeholder for decode button press action
     decode_file_name = global_strings[KEY_SOURCE_FOLDER] + global_strings[KEY_SOURCE_FILENAME] +\
-                       global_strings[KEY_EMBEDDED_EXTENSION]
+                       embedded_extension()
     print("Decode button pressed " + decode_file_name)
     decode(global_strings[KEY_SOURCE_FULL_PATH], decode_file_name)
 
@@ -157,15 +157,17 @@ def browse_file():
     global_strings[KEY_SOURCE_EXTENSION] = file_path[last_dot_index + 1:]
     print("Source folder: " + global_strings[KEY_SOURCE_FOLDER])
     print("Source filename: " + global_strings[KEY_SOURCE_FILENAME])
+    print("Source extension: " + global_strings[KEY_SOURCE_EXTENSION])
+    print("Embedded extension: " + global_strings[KEY_EMBEDDED_EXTENSION])
 
 
 # Create the main window
 root = tk.Tk()
-root.title("Changeling")
+root.title("Puca in Graphic")
 
 # Create buttons
-encode_button = tk.Button(root, text="Encode", command=encode_pressed)
-decode_button = tk.Button(root, text="Decode", command=decode_pressed)
+encode_button = tk.Button(root, text="Encode Here", command=encode_pressed)
+decode_button = tk.Button(root, text="Decode Here", command=decode_pressed)
 browse_button = tk.Button(root, text="Browse", command=browse_file)
 
 # Create text box
