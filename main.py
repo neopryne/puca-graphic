@@ -3,7 +3,7 @@ from math import sqrt
 from math import ceil
 import tkinter as tk
 from tkinter import filedialog
-import zlib
+import cProfile
 
 #the unlicense for now.
 
@@ -30,6 +30,8 @@ def encode(zip_file_path, image_path):
         print(num_pixels)
         print(width)
         print(height)
+
+        #3Meg -> 1Mil pixels
 
         # Create a new image with the determined size
         encoded_image = Image.new('RGB', image_size)
@@ -70,13 +72,7 @@ def decode(image_path, zip_file_path):
     #todo add a pixel counter to the decode because it takes a long time for files over like a meg.
     #todo also make this faster because wow.  It's going to take like an hour for a 12 meg file.
 
-    binary_data = ''
-    for pixel in encoded_image.getdata():
-        print(i)
-        i = i + 1
-        binary_data += format(pixel[0], '08b')  # Red channel
-        binary_data += format(pixel[1], '08b')  # Green channel
-        binary_data += format(pixel[2], '08b')  # Blue channel
+    binary_data = ''.join(format(pixel[0], '08b') + format(pixel[1], '08b') + format(pixel[2], '08b') for pixel in encoded_image.getdata())
 
     # Convert binary data back to bytes
     bytes_data = bytes(int(binary_data[i:i+8], 2) for i in range(0, len(binary_data), 8))
